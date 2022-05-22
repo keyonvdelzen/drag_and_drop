@@ -15,12 +15,12 @@ export default {
       required: false,
       default: "drag-container",
     },
-    dragItemClass: {
+    dragElementClass: {
       type: String,
       required: false,
-      default: "drag-item",
+      default: "drag-element",
     },
-    preDragItemClass: {
+    preDragElementClass: {
       type: String,
       required: false,
       default: "pre-drag",
@@ -28,79 +28,90 @@ export default {
     dragDelay: {
       type: Number,
       required: false,
-      default: 50,
+      default: 150,
+    },
+    animateDropPreview: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    animateDragElement: {
+      type: Boolean,
+      required: false,
+      default: false,
     },
   },
   data() {
     return {
       dragging: false,
       dropped: false,
-      elementKey: null,
+      elementId: null,
       elementClone: null,
+      oldIndex: null,
+      newIndex: null,
       cursorX: null,
       cursorY: null,
       cursorMovedX: 0,
-      cursorMovedY: null,
+      cursorMovedY: 0,
       cursorMovedInitialized: false,
-      hiddenElementDisplay: null,
-      oldIndex: null,
-      newIndex: null,
+      hiddenElementDisplayValue: null,
     };
   },
   mounted() {
-    this.initializeElements();
+    this.initialize();
   },
   methods: {
-    updateElementValue(newValue) {
-      if (Array.isArray(newValue)) {
-        this.$emit("elements-changed", newValue);
-      }
-    },
-    initializeElements() {
-      // Set id on container
+    initialize() {
+      // Get all direct child elements of element with containerId
       let domElements = document.querySelectorAll(
         `#${this.dragContainerId} > *`
       );
-      let elements = this.elements;
 
+      let uniqueId = 0;
+
+      // Set unique ids on child elements and bind event listeners
       for (let i = 0; i < domElements.length; i++) {
         let element = domElements[i];
-        let item = elements[i];
 
-        // Set id on elements
-        element.id = `drag-element-${item.id}`;
+        // Set unique id on element (if element has no id yet)
+        if (element.id.length === 0) {
+          element.id = `drag-element-${uniqueId}`;
+          uniqueId++;
+        }
 
-        // Set event listeners
+        // Bind event listeners
         element.addEventListener("mousedown", (e) => {
           if (e.which === 1) {
-            this.handleOnClickElement(item.id, item.id);
+            this.handleOnClick(element.id);
           }
         });
         element.addEventListener("mouseenter", () => {
-          this.setElementDropPreview(item.id);
+          this.setElementDropPreview(element.id);
         });
       }
+
+      uniqueId = 0;
     },
-    handleOnClickElement(elementKey) {
+    handleOnClick(elementId) {
       // Create elementClone
-      let element = this.getElementByKey(elementKey);
+      let element = this.getElementById(elementId);
       let elementIndex = [].indexOf.call(element.parentNode.children, element);
       let elementClone = this.createElementClone(element);
 
+      // Call drop listener handler
+      this.handleDropListener(elementId);
+
       // Store data
-      this.elementKey = elementKey;
+      this.elementId = elementId;
       this.oldIndex = elementIndex;
       this.elementClone = elementClone;
 
       // Configure element and elementClone
       let elementData = this.configureElementAndClone(element, elementClone);
 
-      // Set handle drop listener
-      this.handleDropListener(elementKey);
-
-      // Enter dragging state after set amount of time (dragDelay prop)
+      // Enter dragging state after x amount of time (customizable)
       setTimeout(() => {
-        this.handleOnHoldElement(
+        this.handleOnHold(
           element,
           elementClone,
           elementData.elementWidth,
@@ -108,13 +119,13 @@ export default {
         );
       }, this.dragDelay);
     },
-    handleOnHoldElement(element, elementClone, elementWidth, elementHeight) {
+    handleOnHold(element, elementClone, elementWidth, elementHeight) {
       // Remove pre-drag class from element
-      element.classList.remove(`${this.preDragItemClass}`);
+      element.classList.remove(`${this.preDragElementClass}`);
 
       // Enter dragging state if user didn't drop item
       if (!this.dropped) {
-        // Replace element with elementClone
+        // Insert elementClone
         let parentElement = element.parentNode;
         let elementIndexInParentContainer = Array.prototype.indexOf.call(
           parentElement.children,
@@ -125,20 +136,26 @@ export default {
           parentElement.children[elementIndexInParentContainer]
         );
 
-        // Handle drag class/styling
+        // Copy element styling to elementClone
         this.copyElementStylingToCloneDeep(element, elementClone);
+
+        // Set dragging class on elementClone
         elementClone.classList.add("dragging");
 
-        // Set move listener to position element clone at cursor position
-        this.handleMoveListener(elementClone, elementWidth, elementHeight);
+        if (this.animateDragElement) {
+          elementClone.classList.add("animated");
+        }
 
         // Set dragging true
         this.dragging = true;
 
+        // Bind move listener to position element clone at cursor position
+        this.handleMoveListener(elementClone, elementWidth, elementHeight);
+
         // Hide original element
         this.hideElement(element);
       } else {
-        // Reset dropped status if user only clicked the element
+        // Reset dropped status if user dropped the element before entering dragging state
         this.dropped = false;
       }
     },
@@ -157,10 +174,10 @@ export default {
         }
       });
     },
-    handleDropListener(elementKey) {
+    handleDropListener(elementId) {
       let self = this;
       document.addEventListener("mouseup", function mouseUpHandler() {
-        self.dropElement(elementKey);
+        self.dropElement(elementId);
         this.removeEventListener("mouseup", mouseUpHandler);
       });
     },
@@ -196,9 +213,9 @@ export default {
       elementClone.style.visibility = "visible";
       elementClone.style.position = "absolute";
     },
-    setElementDropPreview(hoverElementKey) {
+    setElementDropPreview(hoverElementId) {
       if (this.dragging) {
-        let domElement = this.getElementByKey(this.elementKey);
+        let domElement = this.getElementById(this.elementId);
         let elementSize = this.getElementSize(domElement);
         let elementWidth = elementSize.width;
         let elementHeight = elementSize.height;
@@ -208,7 +225,7 @@ export default {
           this.cursorMovedX > elementWidth ||
           this.cursorMovedY > elementHeight
         ) {
-          let hoverDomElement = this.getElementByKey(hoverElementKey);
+          let hoverDomElement = this.getElementById(hoverElementId);
           let hoverDomParentElement = hoverDomElement.parentElement;
 
           // Set element drop preview styling
@@ -221,85 +238,26 @@ export default {
       }
     },
     setElementDropPreviewStyling(element) {
-      // TODO: Implement drop preview styling customization
-      element.style.opacity = 0.5;
-      element.classList.add("shaking");
-    },
-    clearElementDropPreviewStyling(element) {
-      // TODO: Implement drop preview styling customization
-      element.style.opacity = 1;
-      element.classList.remove("shaking");
-    },
-    dropElement(elementKey) {
-      let element = this.getElementByKey(elementKey);
+      element.classList.add("element-drop-preview");
 
-      // TODO: Handle items array order update
-      // BUG: ON DROPPING ELEMENT, DOM ELEMENTS DO SOME FUNKY STUFF
-      // #dev#
-
-      let elementIndex = [].indexOf.call(element.parentNode.children, element);
-      if (elementIndex > this.oldIndex) {
-        elementIndex--;
+      if (this.animateDropPreview) {
+        element.classList.add("animated");
       }
-      this.newIndex = elementIndex;
-
-      // Update array order
-      let newElementsOrderArray = [...this.elements];
-
-      let oldIndex = this.oldIndex;
-      console.log("Old index: " + oldIndex);
-      let newIndex = this.newIndex;
-      console.log("New index: " + newIndex);
-
-      // console.log(oldIndex, newIndex);
-
-      if (newIndex > oldIndex || newIndex < oldIndex) {
-        let elementToMove = newElementsOrderArray[oldIndex];
-        // console.log(elementToMove);
-        newElementsOrderArray.splice(oldIndex, 1);
-        newElementsOrderArray.splice(newIndex, 0, elementToMove);
-        console.table(this.elements);
-        console.table(newElementsOrderArray);
-      } else {
-        console.log("order did not change");
-      }
-
-      // Emit updated elements array
-      this.updateElementValue(newElementsOrderArray);
-
-      // #dev#
-
-      // Clean up
-      this.clearElementDropPreviewStyling(element);
-      this.dragging = false;
-      this.elementKey = null;
-      this.clearTrackedCursorMovement();
-      let elementClone = this.getElementByKey(elementKey, true);
-
-      if (elementClone) {
-        elementClone.remove();
-        this.elementClone = null;
-      } else {
-        // If user dropped item before it entered dragging state (time between user clicking + dragDelay prop)
-        this.dropped = true;
-      }
-
-      this.showElement(element);
     },
     showElement(element) {
-      element.style.display = this.hiddenElementDisplay;
-      this.hiddenElementDisplay = null;
+      element.style.display = this.hiddenElementDisplayValue;
+      this.hiddenElementDisplayValue = null;
     },
     hideElement(element) {
       // Get element's display property value
       let elementDisplay = window.getComputedStyle(element).display;
 
-      // Save copy of element's display property value to be able to set it back later in showElement
+      // Save copy of element's display property value to be able to set it back later in this.showElement()
       if (elementDisplay) {
-        this.hiddenElementDisplay = elementDisplay;
+        this.hiddenElementDisplayValue = elementDisplay;
       } else {
         // If not set, assume value is block
-        this.hiddenElementDisplay = "block";
+        this.hiddenElementDisplayValue = "block";
       }
 
       // Hide element
@@ -309,10 +267,11 @@ export default {
       return element.cloneNode(true);
     },
     configureElementAndClone(element, clone) {
-      element.classList.add(`${this.preDragItemClass}`);
+      // Set pre-drag class on element
+      element.classList.add(`${this.preDragElementClass}`);
+
+      // Set clone's id
       clone.id = clone.id + "-clone";
-      clone.classList.remove(this.dragItemClass);
-      clone.classList.add(`${this.dragItemClass}-clone`);
 
       // Set clone's size
       let elementPadding = this.getElementPadding(element);
@@ -323,7 +282,7 @@ export default {
       clone.style.width = elementWidth;
       clone.style.height = elementHeight;
 
-      // Return
+      // Return data
       let elementData = {
         element: element,
         elementClone: clone,
@@ -340,22 +299,22 @@ export default {
 
       // Get element's and clone's child nodes
       let elementChildNodes = document.querySelectorAll(
-        `#${this.dragContainerId} > #${this.getElementByKey(
-          this.elementKey,
+        `#${this.dragContainerId} > #${this.getElementById(
+          this.elementId,
           false,
           true
         )}  *`
       );
 
       let cloneChildNodes = document.querySelectorAll(
-        `#${this.dragContainerId} > #${this.getElementByKey(
-          this.elementKey,
+        `#${this.dragContainerId} > #${this.getElementById(
+          this.elementId,
           true,
           true
         )} *`
       );
 
-      // Copy element's children styles to clone's children
+      // Copy element's children's styling to clone's children
       for (let i = 0; i < elementChildNodes.length; i++) {
         let elementChildNode = elementChildNodes[i];
         let cloneChildNode = cloneChildNodes[i];
@@ -363,23 +322,130 @@ export default {
         let elementChildNodeStylesCssText =
           this.getElementCssText(elementChildNode);
         cloneChildNode.style.cssText = elementChildNodeStylesCssText;
+
+        // Set pointer events to none,
+        // because else the elementClone prevents the hover event of the hoverElement from being triggered
+        // TODO: find a way to set the cursor to 'dragging' when dragging
         cloneChildNode.style.pointerEvents = "none";
       }
     },
-    getElementByKey(elementKey, clone = false, string = false) {
+    trackCursorMovement(
+      oldPositionX,
+      oldPositionY,
+      newpositionX,
+      newPositionY
+    ) {
+      // Calculates cumulative cursor movement and stores it in data()
+      let cursorXDifference = 0;
+      let cursorYDifference = 0;
+
+      if (this.cursorMovedInitialized) {
+        cursorXDifference = newpositionX - oldPositionX;
+        cursorYDifference = newPositionY - oldPositionY;
+      } else {
+        this.cursorMovedInitialized = true;
+      }
+
+      this.cursorMovedX = this.cursorMovedX + Math.abs(cursorXDifference);
+      this.cursorMovedY = this.cursorMovedY + Math.abs(cursorYDifference);
+    },
+    dropElement(elementId) {
+      let element = this.getElementById(elementId);
+
+      // Get and set element index
+      let elementIndex = [].indexOf.call(element.parentNode.children, element);
+
+      if (elementIndex > this.oldIndex) {
+        elementIndex--;
+      }
+
+      this.newIndex = elementIndex;
+
+      let oldIndex = this.oldIndex;
+      let newIndex = this.newIndex;
+
+      // Update array order if oldIndex !== newIndex
+      let newElementsArray = [...this.elements];
+      if (newIndex > oldIndex || newIndex < oldIndex) {
+        let elementToMove = newElementsArray[oldIndex];
+        newElementsArray.splice(oldIndex, 1);
+        newElementsArray.splice(newIndex, 0, elementToMove);
+
+        // Emit updated elements array
+        let oldElementsArray = this.elements;
+        this.emitElementsChanged(
+          oldElementsArray,
+          newElementsArray,
+          oldIndex,
+          newIndex,
+          element
+        );
+      }
+
+      // Clean up state
+      this.cleanUpState(element, elementId);
+    },
+    emitElementsChanged(
+      oldElementsArray,
+      newElementsArray,
+      oldElementIndex,
+      newElementIndex,
+      draggedElement
+    ) {
+      this.$emit("elements-changed", {
+        oldElementsArray: oldElementsArray,
+        newElementsArray: newElementsArray,
+        oldElementIndex: oldElementIndex,
+        newElementIndex: newElementIndex,
+        draggedElement: draggedElement,
+      });
+    },
+    clearElementDropPreviewStyling(element) {
+      // TODO: Implement drop preview styling customization
+      element.style.opacity = "";
+      element.classList.remove("element-drop-preview");
+
+      if (this.animateDropPreview) {
+        element.classList.remove("animated");
+      }
+    },
+    cleanUpState(element, elementId) {
+      let elementClone = this.getElementById(elementId, true);
+
+      if (elementClone) {
+        elementClone.remove();
+      } else {
+        // If user dropped item before it entered dragging state (time between user clicking + dragDelay prop)
+        this.dropped = true;
+      }
+
+      this.clearElementDropPreviewStyling(element);
+
+      this.dragging = false;
+      this.elementId = null;
+      this.elementClone = null;
+      this.oldIndex = null;
+      this.newIndex = null;
+      this.cursorX = null;
+      this.cursorY = null;
+      this.cursorMovedX = 0;
+      this.cursorMovedY = 0;
+      this.cursorMovedInitialized = false;
+
+      this.showElement(element);
+    },
+    getElementById(elementId, clone = false, string = false) {
       if (clone) {
         if (string) {
-          return "drag-element-" + elementKey + "-clone";
+          return elementId + "-clone";
         } else {
-          return document.getElementById(
-            "drag-element-" + elementKey + "-clone"
-          );
+          return document.getElementById(elementId + "-clone");
         }
       } else {
         if (string) {
-          return "drag-element-" + elementKey;
+          return elementId;
         } else {
-          return document.getElementById("drag-element-" + elementKey);
+          return document.getElementById(elementId);
         }
       }
     },
@@ -438,128 +504,106 @@ export default {
 
       return elementSize;
     },
-    trackCursorMovement(
-      oldPositionX,
-      oldPositionY,
-      newpositionX,
-      newPositionY
-    ) {
-      // Calculates cumulative cursor movement and stores it in data()
-      let cursorXDifference = 0;
-      let cursorYDifference = 0;
-
-      if (this.cursorMovedInitialized) {
-        cursorXDifference = newpositionX - oldPositionX;
-        cursorYDifference = newPositionY - oldPositionY;
-      } else {
-        this.cursorMovedInitialized = true;
-      }
-
-      this.cursorMovedX = this.cursorMovedX + Math.abs(cursorXDifference);
-      this.cursorMovedY = this.cursorMovedY + Math.abs(cursorYDifference);
-    },
-    clearTrackedCursorMovement() {
-      this.cursorMovedInitialized = false;
-      this.cursorX = null;
-      this.cursorY = null;
-      this.cursorMovedX = null;
-      this.cursorMovedY = null;
-    },
   },
 };
 </script>
 
 <style lang="scss">
 .dragging {
-  animation: pulse 1s infinite !important;
-  opacity: 0.6 !important;
   pointer-events: none !important;
-  // padding: 0;
 
-  @keyframes pulse {
-    0% {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
-    }
+  &.animated {
+    animation: element-clone-pulse 1s infinite !important;
 
-    70% {
-      transform: scale(1);
-      box-shadow: 0 0 0 5px rgba(0, 0, 0, 0);
-    }
+    @keyframes element-clone-pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+      }
 
-    100% {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 5px rgba(0, 0, 0, 0);
+      }
+
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+      }
     }
   }
 }
 
-.shaking {
-  animation: shake-with-pause 2s infinite !important;
+.element-drop-preview {
+  opacity: 0.5;
 
-  @keyframes shake-with-pause {
-    0% {
-      transform: translate(1px, 1px) rotate(0deg);
-    }
-    5% {
-      transform: translate(-1px, -2px) rotate(-1deg);
-    }
-    10% {
-      transform: translate(-3px, 0px) rotate(1deg);
-    }
-    15% {
-      transform: translate(3px, 2px) rotate(0deg);
-    }
-    20% {
-      transform: translate(1px, -1px) rotate(1deg);
-    }
-    25% {
-      transform: translate(-1px, 2px) rotate(-1deg);
-    }
-    30% {
-      transform: translate(-3px, 1px) rotate(0deg);
-    }
-    35% {
-      transform: translate(3px, 1px) rotate(-1deg);
-    }
-    40% {
-      transform: translate(-1px, -1px) rotate(1deg);
-    }
-    45% {
-      transform: translate(1px, 2px) rotate(0deg);
-    }
-    50% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    55% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    60% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    65% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    70% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    75% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    80% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    85% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    90% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    95% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    100% {
-      transform: translate(0px, 0px) rotate(0deg);
+  &.animated {
+    animation: element-drop-preview-shake-with-pause 2s infinite !important;
+
+    @keyframes element-drop-preview-shake-with-pause {
+      0% {
+        transform: translate(1px, 1px) rotate(0deg);
+      }
+      5% {
+        transform: translate(-1px, -2px) rotate(-1deg);
+      }
+      10% {
+        transform: translate(-3px, 0px) rotate(1deg);
+      }
+      15% {
+        transform: translate(3px, 2px) rotate(0deg);
+      }
+      20% {
+        transform: translate(1px, -1px) rotate(1deg);
+      }
+      25% {
+        transform: translate(-1px, 2px) rotate(-1deg);
+      }
+      30% {
+        transform: translate(-3px, 1px) rotate(0deg);
+      }
+      35% {
+        transform: translate(3px, 1px) rotate(-1deg);
+      }
+      40% {
+        transform: translate(-1px, -1px) rotate(1deg);
+      }
+      45% {
+        transform: translate(1px, 2px) rotate(0deg);
+      }
+      50% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      55% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      60% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      65% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      70% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      75% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      80% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      85% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      90% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      95% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
+      100% {
+        transform: translate(0px, 0px) rotate(0deg);
+      }
     }
   }
 }

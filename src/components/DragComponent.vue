@@ -692,7 +692,7 @@ export default {
 
 .element-drop-preview {
   z-index: -100000000000;
-  opacity: 0.5;
+  opacity: 0.5 !important;
 
   &.animated-shake-with-pause {
     animation: element-drop-preview-shake-with-pause 2s infinite !important;

@@ -181,7 +181,7 @@ export default {
     handleOnClick(elementId) {
       if (!this.dropped) {
         console.log(
-          "%c⌛ " + Date.now() + "%cEntered click state",
+          "%c⌛ " + this.getLogTime() + "%cEntered click state",
           this.consoleStyles.time,
           this.consoleStyles.info.default
         );
@@ -223,7 +223,7 @@ export default {
       // Enter dragging state if user didn't drop item
       if (!this.dropped) {
         console.log(
-          "%c⌛ " + Date.now() + "%cEntered drag state",
+          "%c⌛ " + this.getLogTime() + "%cEntered drag state",
           this.consoleStyles.time,
           this.consoleStyles.info.default
         );
@@ -262,7 +262,9 @@ export default {
         this.dropped = false;
 
         console.log(
-          "%c⌛ " + Date.now() + "%cDropped element before entering drag state",
+          "%c⌛ " +
+            this.getLogTime() +
+            "%cDropped element before entering drag state",
           this.consoleStyles.time,
           this.consoleStyles.info.warning
         );
@@ -617,6 +619,18 @@ export default {
       elementSize.height = elementHeight;
 
       return elementSize;
+    },
+    getLogTime() {
+      let time = new Date();
+      time =
+        String(time.getHours()).padStart(2, "0") +
+        ":" +
+        String(time.getMinutes()).padStart(2, "0") +
+        ":" +
+        String(time.getSeconds()).padStart(2, "0") +
+        ":" +
+        String(time.getMilliseconds()).padStart(3, "0");
+      return time;
     },
   },
   watch: {

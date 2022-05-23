@@ -175,7 +175,7 @@ export default {
     logStuff(data) {
       // Moved element log
       console.groupCollapsed(
-        "%c⌛ " + Date.now() + "%cMoved element 🚀",
+        "%c⌛ " + this.getLogTime() + "%cMoved element 🚀",
         this.consoleStyles.time,
         this.consoleStyles.info.success
       );
@@ -212,6 +212,18 @@ export default {
 
       console.groupEnd();
       // Moved element log end
+    },
+    getLogTime() {
+      let time = new Date();
+      time =
+        String(time.getHours()).padStart(2, "0") +
+        ":" +
+        String(time.getMinutes()).padStart(2, "0") +
+        ":" +
+        String(time.getSeconds()).padStart(2, "0") +
+        ":" +
+        String(time.getMilliseconds()).padStart(3, "0");
+      return time;
     },
   },
 };

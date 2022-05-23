@@ -168,7 +168,7 @@ export default {
 
       // Moved element log
       console.groupCollapsed(
-        "%c@ " + Date.now() + "%cMoved element",
+        "%c⌛ " + Date.now() + "%cMoved element 🚀",
         this.consoleStyles.time,
         this.consoleStyles.info.success
       );

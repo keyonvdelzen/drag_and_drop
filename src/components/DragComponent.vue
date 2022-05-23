@@ -158,7 +158,7 @@ export default {
     },
     handleOnClick(elementId) {
       console.log(
-        "%c@ " + Date.now() + "%cEntered click state",
+        "%c⌛ " + Date.now() + "%cEntered click state",
         this.consoleStyles.time,
         this.consoleStyles.info.default
       );
@@ -196,7 +196,7 @@ export default {
       // Enter dragging state if user didn't drop item
       if (!this.dropped) {
         console.log(
-          "%c@ " + Date.now() + "%cEntered drag state",
+          "%c⌛ " + Date.now() + "%cEntered drag state",
           this.consoleStyles.time,
           this.consoleStyles.info.default
         );
@@ -235,7 +235,7 @@ export default {
         this.dropped = false;
 
         console.log(
-          "%c@ " + Date.now() + "%cDropped element before entering drag state",
+          "%c⌛ " + Date.now() + "%cDropped element before entering drag state",
           this.consoleStyles.time,
           this.consoleStyles.info.warning
         );

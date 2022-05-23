@@ -90,6 +90,68 @@ export default {
     };
   },
   computed: {
+    consoleStyles() {
+      let groupStyles = [
+        "margin-bottom: 3px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: gray",
+      ].join(";");
+
+      let timeStyles = [
+        "margin-right: 8px",
+        "margin-bottom: 3px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: gray",
+      ].join(";");
+
+      let infoStylesDefault = [
+        "margin-right: 8px",
+        "margin-bottom: 3px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: #4a4a4a",
+      ].join(";");
+
+      let infoStylesSuccess = [
+        "margin-right: 8px",
+        "margin-bottom: 4px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: #48c78e",
+      ].join(";");
+
+      let infoStylesWarning = [
+        "margin-right: 8px",
+        "margin-bottom: 4px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: rgba(0,0,0,.7)",
+        "background: #ffe08a",
+      ].join(";");
+
+      let styles = {
+        group: groupStyles,
+        time: timeStyles,
+        info: {
+          default: infoStylesDefault,
+          success: infoStylesSuccess,
+          warning: infoStylesWarning,
+        },
+      };
+
+      return styles;
+    },
     // sortedItems: function () {
     //   function compare(a, b) {
     //     if (a.order < b.order) return -1;
@@ -104,13 +166,49 @@ export default {
     handleElementsChanged(data) {
       this.items = data.newElementsArray;
 
-      // console.table(data.oldElementsArray);
-      // console.table(data.newElementsArray);
+      // Moved element log
+      console.groupCollapsed(
+        "%c@ " + Date.now() + "%cMoved element",
+        this.consoleStyles.time,
+        this.consoleStyles.info.success
+      );
+
+      // --Dragged element
+      console.groupCollapsed(
+        "%cDragged element",
+        this.consoleStyles.info.default
+      );
+      console.log(data.draggedElement);
+      console.groupEnd();
+
+      // --Old index
+      console.log(
+        "%cOld index: " + data.oldElementIndex,
+        this.consoleStyles.info.default
+      );
+
+      // --New index
+      console.log(
+        "%cNew index: " + data.newElementIndex,
+        this.consoleStyles.info.default
+      );
+
+      // --Old array
+      console.groupCollapsed("%cOld array", this.consoleStyles.info.default);
+      console.table(data.oldElementsArray);
+      console.groupEnd();
+
+      // --New array
+      console.groupCollapsed("%cNew array", this.consoleStyles.info.default);
+      console.table(data.newElementsArray);
+      console.groupEnd();
+
+      console.groupEnd();
+      // Moved element log end
     },
     handleElementClick() {
       // Do stuff when user clicks on element without dragging it
       // ...
-      console.log("clicked not dragged");
     },
   },
 };

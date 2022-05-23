@@ -60,6 +60,70 @@ export default {
   mounted() {
     this.initialize();
   },
+  computed: {
+    consoleStyles() {
+      let groupStyles = [
+        "margin-bottom: 3px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: gray",
+      ].join(";");
+
+      let timeStyles = [
+        "margin-right: 8px",
+        "margin-bottom: 3px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: gray",
+      ].join(";");
+
+      let infoStylesDefault = [
+        "margin-right: 8px",
+        "margin-bottom: 3px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: #4a4a4a",
+      ].join(";");
+
+      let infoStylesSuccess = [
+        "margin-right: 8px",
+        "margin-bottom: 4px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: white",
+        "background: #48c78e",
+      ].join(";");
+
+      let infoStylesWarning = [
+        "margin-right: 8px",
+        "margin-bottom: 4px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: rgba(0,0,0,.7)",
+        "background: #ffe08a",
+      ].join(";");
+
+      let styles = {
+        group: groupStyles,
+        time: timeStyles,
+        info: {
+          default: infoStylesDefault,
+          success: infoStylesSuccess,
+          warning: infoStylesWarning,
+        },
+      };
+
+      return styles;
+    },
+  },
   methods: {
     initialize() {
       // Get all direct child elements of element with containerId
@@ -93,6 +157,12 @@ export default {
       uniqueId = 0;
     },
     handleOnClick(elementId) {
+      console.log(
+        "%c@ " + Date.now() + "%cEntered click state",
+        this.consoleStyles.time,
+        this.consoleStyles.info.default
+      );
+
       // Create elementClone
       let element = this.getElementById(elementId);
       let elementIndex = [].indexOf.call(element.parentNode.children, element);
@@ -125,6 +195,12 @@ export default {
 
       // Enter dragging state if user didn't drop item
       if (!this.dropped) {
+        console.log(
+          "%c@ " + Date.now() + "%cEntered drag state",
+          this.consoleStyles.time,
+          this.consoleStyles.info.default
+        );
+
         // Insert elementClone
         let parentElement = element.parentNode;
         let elementIndexInParentContainer = Array.prototype.indexOf.call(
@@ -157,6 +233,12 @@ export default {
       } else {
         // Reset dropped status if user dropped the element before entering dragging state
         this.dropped = false;
+
+        console.log(
+          "%c@ " + Date.now() + "%cDropped element before entering drag state",
+          this.consoleStyles.time,
+          this.consoleStyles.info.warning
+        );
       }
     },
     handleMoveListener(elementClone, elementWidth, elementHeight) {

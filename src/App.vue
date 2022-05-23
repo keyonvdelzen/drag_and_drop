@@ -166,6 +166,13 @@ export default {
     handleElementsChanged(data) {
       this.items = data.newElementsArray;
 
+      this.logStuff(data);
+    },
+    handleElementClick() {
+      // Do stuff when user clicks on element without dragging it
+      // ...
+    },
+    logStuff(data) {
       // Moved element log
       console.groupCollapsed(
         "%c⌛ " + Date.now() + "%cMoved element 🚀",
@@ -206,10 +213,6 @@ export default {
       console.groupEnd();
       // Moved element log end
     },
-    handleElementClick() {
-      // Do stuff when user clicks on element without dragging it
-      // ...
-    },
   },
 };
 </script>
@@ -239,8 +242,9 @@ $light-gray: #fafafa;
       transition: opacity 0.05s ease-in;
       background-color: $light-gray;
       user-select: none;
+      opacity: 1;
 
-      // &.dragging {
+      // &.element-is-dragging {
       //   // Customize drag element clone styling...
       // }
 
@@ -255,6 +259,7 @@ $light-gray: #fafafa;
 
       &.pre-drag {
         opacity: 0.8;
+        // Customize drag element pre-drag styling...
       }
 
       &:not(:last-child) {

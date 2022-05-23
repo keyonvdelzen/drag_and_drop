@@ -55,6 +55,13 @@ export default {
       cursorMovedY: 0,
       cursorMovedInitialized: false,
       hiddenElementDisplayValue: null,
+      travelDistanceWatcherSwitches: {
+        // Dev
+        thousand: true,
+        tenThousand: true,
+        hundredThousand: true,
+        million: true,
+      },
     };
   },
   mounted() {
@@ -111,6 +118,16 @@ export default {
         "background: #ffe08a",
       ].join(";");
 
+      let infoStylesMagic = [
+        "margin-right: 8px",
+        "margin-bottom: 4px",
+        "border-radius: 4px",
+        "padding: 4px 8px",
+        "font-weight: bold",
+        "color: rgba(0,0,0,.7)",
+        "background: #FFC0CB",
+      ].join(";");
+
       let styles = {
         group: groupStyles,
         time: timeStyles,
@@ -118,10 +135,15 @@ export default {
           default: infoStylesDefault,
           success: infoStylesSuccess,
           warning: infoStylesWarning,
+          magic: infoStylesMagic,
         },
       };
 
       return styles;
+    },
+    // Dev
+    cursorDistanceTraveled() {
+      return this.cursorMovedX + this.cursorMovedY;
     },
   },
   methods: {
@@ -157,37 +179,42 @@ export default {
       uniqueId = 0;
     },
     handleOnClick(elementId) {
-      console.log(
-        "%c⌛ " + Date.now() + "%cEntered click state",
-        this.consoleStyles.time,
-        this.consoleStyles.info.default
-      );
-
-      // Create elementClone
-      let element = this.getElementById(elementId);
-      let elementIndex = [].indexOf.call(element.parentNode.children, element);
-      let elementClone = this.createElementClone(element);
-
-      // Call drop listener handler
-      this.handleDropListener(elementId);
-
-      // Store data
-      this.elementId = elementId;
-      this.oldIndex = elementIndex;
-      this.elementClone = elementClone;
-
-      // Configure element and elementClone
-      let elementData = this.configureElementAndClone(element, elementClone);
-
-      // Enter dragging state after x amount of time (customizable)
-      setTimeout(() => {
-        this.handleOnHold(
-          element,
-          elementClone,
-          elementData.elementWidth,
-          elementData.elementHeight
+      if (!this.dropped) {
+        console.log(
+          "%c⌛ " + Date.now() + "%cEntered click state",
+          this.consoleStyles.time,
+          this.consoleStyles.info.default
         );
-      }, this.dragDelay);
+
+        // Create elementClone
+        let element = this.getElementById(elementId);
+        let elementIndex = [].indexOf.call(
+          element.parentNode.children,
+          element
+        );
+        let elementClone = this.createElementClone(element);
+
+        // Call drop listener handler
+        this.handleDropListener(elementId);
+
+        // Store data
+        this.elementId = elementId;
+        this.oldIndex = elementIndex;
+        this.elementClone = elementClone;
+
+        // Configure element and elementClone
+        let elementData = this.configureElementAndClone(element, elementClone);
+
+        // Enter dragging state after x amount of time (customizable)
+        setTimeout(() => {
+          this.handleOnHold(
+            element,
+            elementClone,
+            elementData.elementWidth,
+            elementData.elementHeight
+          );
+        }, this.dragDelay);
+      }
     },
     handleOnHold(element, elementClone, elementWidth, elementHeight) {
       // Remove pre-drag class from element
@@ -216,10 +243,10 @@ export default {
         this.copyElementStylingToCloneDeep(element, elementClone);
 
         // Set dragging class on elementClone
-        elementClone.classList.add("dragging");
+        elementClone.classList.add("element-is-dragging");
 
         if (this.animateDragElement) {
-          elementClone.classList.add("animated");
+          elementClone.classList.add("animated-clone-pulse");
         }
 
         // Set dragging true
@@ -294,6 +321,9 @@ export default {
       elementClone.style.height = elementHeight + "px";
       elementClone.style.visibility = "visible";
       elementClone.style.position = "absolute";
+
+      // eslint-disable-next-line
+      // debugger;
     },
     setElementDropPreview(hoverElementId) {
       if (this.dragging) {
@@ -323,7 +353,7 @@ export default {
       element.classList.add("element-drop-preview");
 
       if (this.animateDropPreview) {
-        element.classList.add("animated");
+        element.classList.add("animated-shake-with-pause");
       }
     },
     showElement(element) {
@@ -378,6 +408,8 @@ export default {
       // Copy element's style to clone's style
       let elementStylesCssText = this.getElementCssText(element);
       clone.style.cssText = elementStylesCssText;
+      clone.style.pointerEvents = "none";
+      clone.style.opacity = element.style.opacity; // Because somehow opacity gets copied over from pre-drag class..?
 
       // Get element's and clone's child nodes
       let elementChildNodes = document.querySelectorAll(
@@ -488,7 +520,7 @@ export default {
       element.classList.remove("element-drop-preview");
 
       if (this.animateDropPreview) {
-        element.classList.remove("animated");
+        element.classList.remove("animated-shake-with-pause");
       }
     },
     cleanUpState(element, elementId) {
@@ -587,14 +619,56 @@ export default {
       return elementSize;
     },
   },
+  watch: {
+    // Dev
+    cursorDistanceTraveled(d) {
+      if (this.travelDistanceWatcherSwitches.thousand) {
+        if (d > 1000) {
+          console.log(
+            "%c🏁" + "%cTraveled 1k pixels",
+            this.consoleStyles.time,
+            this.consoleStyles.info.magic
+          );
+          this.travelDistanceWatcherSwitches.thousand = false;
+        }
+      } else if (this.travelDistanceWatcherSwitches.tenThousand) {
+        if (d > 10000) {
+          console.log(
+            "%c🏁" + "%cTraveled 10k pixels",
+            this.consoleStyles.time,
+            this.consoleStyles.info.magic
+          );
+          this.travelDistanceWatcherSwitches.tenThousand = false;
+        }
+      } else if (this.travelDistanceWatcherSwitches.hundredThousand) {
+        if (d > 100000) {
+          console.log(
+            "%c🏁" + "%cTraveled 100k pixels",
+            this.consoleStyles.time,
+            this.consoleStyles.info.magic
+          );
+          this.travelDistanceWatcherSwitches.hundredThousand = false;
+        }
+      } else if (this.travelDistanceWatcherSwitches.million) {
+        if (d > 1000000) {
+          console.log(
+            "%c🏁" + "%cTraveled one million pixels!",
+            this.consoleStyles.time,
+            this.consoleStyles.info.magic
+          );
+          this.travelDistanceWatcherSwitches.million = false;
+        }
+      }
+    },
+  },
 };
 </script>
 
 <style lang="scss">
-.dragging {
-  pointer-events: none !important;
+.element-is-dragging {
+  z-index: 100000000000;
 
-  &.animated {
+  &.animated-clone-pulse {
     animation: element-clone-pulse 1s infinite !important;
 
     @keyframes element-clone-pulse {
@@ -617,9 +691,10 @@ export default {
 }
 
 .element-drop-preview {
+  z-index: -100000000000;
   opacity: 0.5;
 
-  &.animated {
+  &.animated-shake-with-pause {
     animation: element-drop-preview-shake-with-pause 2s infinite !important;
 
     @keyframes element-drop-preview-shake-with-pause {

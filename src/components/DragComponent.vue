@@ -168,6 +168,7 @@ export default {
         `#${this.dragContainerId} > *`
       );
 
+      // TODO: MAKE UID WORK FOR MULTIPLE INSTANCES
       let uniqueId = 0;
 
       // Set unique ids on child elements and bind event listeners
@@ -461,7 +462,7 @@ export default {
       let elementStylesCssText = this.getElementCssText(element);
       clone.style.cssText = elementStylesCssText;
       clone.style.pointerEvents = "none";
-      clone.style.opacity = element.style.opacity; // Because somehow opacity gets copied over from pre-drag class..?
+      clone.style.opacity = element.style.opacity; // Because somehow opacity gets copied over from pre-drag class (but other properties don't)...
 
       // Get element's and clone's child nodes
       let elementChildNodes = document.querySelectorAll(

@@ -10,6 +10,15 @@ export default {
       type: Array,
       required: true,
     },
+    orientation: {
+      type: String,
+      required: true,
+      default: "vertical",
+      validator(value) {
+        // The value must match one of these strings
+        return ["vertical", "horizontal"].includes(value);
+      },
+    },
     dragContainerId: {
       type: String,
       required: false,
@@ -54,6 +63,7 @@ export default {
       cursorMovedX: 0,
       cursorMovedY: 0,
       cursorMovedInitialized: false,
+      setElementDropPreviewIsUnlocked: false,
       hiddenElementDisplayValue: null,
       travelDistanceWatcherSwitches: {
         // Dev
@@ -171,8 +181,11 @@ export default {
             this.handleOnClick(element.id);
           }
         });
-        element.addEventListener("mouseenter", () => {
-          this.setElementDropPreview(element.id);
+        element.addEventListener("mouseenter", (e) => {
+          this.setElementDropPreview(e, element.id);
+        });
+        element.addEventListener("mouseout", (e) => {
+          this.setElementDropPreview(e, element.id);
         });
       }
 
@@ -327,27 +340,67 @@ export default {
       // eslint-disable-next-line
       // debugger;
     },
-    setElementDropPreview(hoverElementId) {
+    setElementDropPreview(event, hoverElementId) {
       if (this.dragging) {
+        // Get data
         let domElement = this.getElementById(this.elementId);
-        let elementSize = this.getElementSize(domElement);
-        let elementWidth = elementSize.width;
-        let elementHeight = elementSize.height;
+        let hoverDomElement = this.getElementById(hoverElementId);
+        let hoverElementSize = this.getElementSize(hoverDomElement);
+        let hoverElementWidth = hoverElementSize.width;
+        let hoverElementHeight = hoverElementSize.height;
 
         // Only set preview if user has moved cursor further than the size of the element the user is dragging over
+        // or if user has already set a drop preview in current drag
+        // Given a 0.5 factor correction to smooth out the movement
+        let movedFarEnoughX = hoverElementWidth * 0.5 < this.cursorMovedX;
+        let movedFarEnoughY = hoverElementHeight * 0.5 < this.cursorMovedY;
+
         if (
-          this.cursorMovedX > elementWidth ||
-          this.cursorMovedY > elementHeight
+          (this.orientation === "horizontal" && movedFarEnoughX) ||
+          (this.orientation === "vertical" && movedFarEnoughY) ||
+          this.setElementDropPreviewIsUnlocked
         ) {
-          let hoverDomElement = this.getElementById(hoverElementId);
+          this.setElementDropPreviewIsUnlocked = true;
+
           let hoverDomParentElement = hoverDomElement.parentElement;
 
           // Set element drop preview styling
           this.setElementDropPreviewStyling(domElement);
 
+          // Get cursor enter/out position relative to element to calculate whether to insert before or after element
+          let rect = event.target.getBoundingClientRect();
+          let relativeCursorPositionX = event.clientX - rect.left;
+          let relativeCursorPositionY = event.clientY - rect.top;
+          let halfWidth = hoverDomElement.offsetWidth / 2;
+          let halfHeight = hoverDomElement.offsetHeight / 2;
+
           // Show and insert drop preview element
+          if (this.orientation === "vertical") {
+            // If mouse enter/left on top half of element
+            if (relativeCursorPositionY < halfHeight) {
+              hoverDomParentElement.insertBefore(domElement, hoverDomElement);
+            }
+            // If mouse enter/left on bottom half of element
+            else {
+              hoverDomParentElement.insertBefore(
+                domElement,
+                hoverDomElement.nextSibling
+              );
+            }
+          } else {
+            // If mouse enter/left on left half of element
+            if (relativeCursorPositionX < halfWidth) {
+              hoverDomParentElement.insertBefore(domElement, hoverDomElement);
+            }
+            // If mouse enter/left on right half of element
+            else {
+              hoverDomParentElement.insertBefore(
+                domElement,
+                hoverDomElement.nextSibling
+              );
+            }
+          }
           this.showElement(domElement);
-          hoverDomParentElement.insertBefore(domElement, hoverDomElement);
         }
       }
     },
@@ -547,6 +600,7 @@ export default {
       this.cursorMovedX = 0;
       this.cursorMovedY = 0;
       this.cursorMovedInitialized = false;
+      this.setElementDropPreviewIsUnlocked = false;
 
       this.showElement(element);
     },

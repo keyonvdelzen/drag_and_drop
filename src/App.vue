@@ -81,7 +81,8 @@ export default {
   },
   data() {
     return {
-      items: [
+      verbose: false,
+      itemsVertical: [
         {
           id: 0,
           text: "condimentum id venenatis a condimentum vitae sapien pellentesque habitant morbi tristique senectus et",
@@ -106,6 +107,8 @@ export default {
           order: 2,
           color: "lightblue",
         },
+      ],
+      itemsHorizontal: [
         {
           id: 4,
           text: "eros donec ac odio tempor orci dapibus ultrices in  eu consequat ac felis donec et odio pellentesque diam volutpat commodo sed egestas egestas",
@@ -209,84 +212,107 @@ export default {
   methods: {
     handleElementsChanged(data) {
       this.items = data.newElementsArray;
-
-      this.logStuff(data);
     },
     handleElementClick() {
       // Do stuff when user clicks on element without dragging it
       // ...
     },
-    logStuff(data) {
-      // Moved element log
-      console.groupCollapsed(
-        "%c⌛ " + this.getLogTime() + "%cMoved element 🚀",
-        this.consoleStyles.time,
-        this.consoleStyles.info.success
-      );
-
-      // --Dragged element
-      console.groupCollapsed(
-        "%cDragged element",
-        this.consoleStyles.info.default
-      );
-      console.log(data.draggedElement);
-      console.groupEnd();
-
-      // --Old index
-      console.log(
-        "%cOld index: " + data.oldElementIndex,
-        this.consoleStyles.info.default
-      );
-
-      // --New index
-      console.log(
-        "%cNew index: " + data.newElementIndex,
-        this.consoleStyles.info.default
-      );
-
-      // --Old array
-      console.groupCollapsed("%cOld array", this.consoleStyles.info.default);
-      console.table(data.oldElementsArray);
-      console.groupEnd();
-
-      // --New array
-      console.groupCollapsed("%cNew array", this.consoleStyles.info.default);
-      console.table(data.newElementsArray);
-      console.groupEnd();
-
-      console.groupEnd();
-      // Moved element log end
-    },
-    getLogTime() {
-      let time = new Date();
-      time =
-        String(time.getHours()).padStart(2, "0") +
-        ":" +
-        String(time.getMinutes()).padStart(2, "0") +
-        ":" +
-        String(time.getSeconds()).padStart(2, "0") +
-        ":" +
-        String(time.getMilliseconds()).padStart(3, "0");
-      return time;
-    },
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 $gray: #aaa;
 $light-gray: #fafafa;
+.controls {
+  margin-bottom: 16px;
+  padding: 16px;
+
+  .button {
+    display: inline-block;
+    margin: 4px 2px;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 32px;
+    text-align: center;
+    font-size: 16px;
+    text-decoration: none;
+    color: white;
+    background-color: #555555;
+    cursor: pointer;
+    transition: all 0.1s ease-in;
+
+    &.active {
+      background-color: #4caf50;
+    }
+  }
+}
 
 .lists-container {
   display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 32px;
+  padding: 64px;
+  border: 2px dashed gray;
+  border-radius: 8px;
 
-  .drag-container {
+  .drag-container-vertical {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 16px;
+    border: 2px solid gray;
+    border-radius: 8px;
+
+    .drag-element {
+      display: flex;
+      align-items: center;
+      width: 200px;
+      border: 1px solid $gray;
+      border-radius: 8px;
+      padding: 32px;
+      transition: opacity 0.05s ease-in;
+      background-color: $light-gray;
+      user-select: none;
+      opacity: 1;
+
+      // &.element-is-dragging {
+      //   // Customize drag element clone styling...
+      // }
+
+      .handle {
+        background-color: hotpink;
+        margin-right: 8px;
+      }
+
+      &:hover {
+        cursor: grab;
+      }
+
+      &.pre-drag {
+        opacity: 0.8;
+        // Customize drag element pre-drag styling...
+      }
+
+      &:not(:last-child) {
+        margin-bottom: 16px;
+      }
+    }
+
+    // .element-drop-preview {
+    //   // Customize drop preview styling...
+    // }
+  }
+
+  .drag-container-horizontal {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
+    height: 200px;
     padding: 16px;
-    border: 1px solid black;
+    border: 2px solid gray;
+    border-radius: 8px;
 
     .drag-element {
       display: flex;

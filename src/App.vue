@@ -1,29 +1,73 @@
 <template>
-  <div class="lists-container">
-    <drag-component
-      :elements="items"
-      @elements-changed="handleElementsChanged"
-      :dragDelay="150"
-      dragContainerId="drag-container"
-      dragElementClass="drag-element"
-      preDragElementClass="pre-drag"
-      :animateDragElement="true"
-      :animateDropPreview="true"
-    >
-      <div class="drag-container" id="drag-container">
-        <div
-          v-for="item in items"
-          :key="item.id"
-          @click.prevent="handleElementClick"
-          class="drag-element"
-          :style="`background-color: ${item.color}`"
-        >
-          <div class="content">
-            <div class="text">{{ item.text }}</div>
+  <div>
+    <div class="controls">
+      <button
+        @click="verbose = !verbose"
+        class="button"
+        :class="{ active: verbose }"
+      >
+        Verbose
+      </button>
+    </div>
+
+    <div class="lists-container">
+      <!-- Vertical -->
+      <drag-component
+        @elements-changed="handleElementsChanged"
+        :elements="itemsVertical"
+        orientation="vertical"
+        :dragDelay="150"
+        dragContainerId="drag-container-vertical"
+        dragElementClass="drag-element"
+        preDragElementClass="pre-drag"
+        :animateDragElement="true"
+        :animateDropPreview="true"
+        :verbose="verbose"
+      >
+        <div class="drag-container-vertical" id="drag-container-vertical">
+          <div
+            v-for="item in itemsVertical"
+            :key="item.id"
+            :id="'drag-element-' + item.id"
+            @click.prevent="handleElementClick"
+            class="drag-element"
+            :style="`background-color: ${item.color}`"
+          >
+            <div class="content">
+              <div class="text">{{ item.text }}</div>
+            </div>
           </div>
         </div>
-      </div>
-    </drag-component>
+      </drag-component>
+      <!-- Horizontal -->
+      <drag-component
+        @elements-changed="handleElementsChanged"
+        :elements="itemsHorizontal"
+        orientation="horizontal"
+        :dragDelay="150"
+        dragContainerId="drag-container-horizontal"
+        dragElementClass="drag-element"
+        preDragElementClass="pre-drag"
+        :animateDragElement="true"
+        :animateDropPreview="true"
+        :verbose="verbose"
+      >
+        <div class="drag-container-horizontal" id="drag-container-horizontal">
+          <div
+            v-for="item in itemsHorizontal"
+            :key="item.id"
+            :id="'drag-element-' + item.id"
+            @click.prevent="handleElementClick"
+            class="drag-element"
+            :style="`background-color: ${item.color}`"
+          >
+            <div class="content">
+              <div class="text">{{ item.text }}</div>
+            </div>
+          </div>
+        </div>
+      </drag-component>
+    </div>
   </div>
 </template>
 

@@ -49,6 +49,11 @@ export default {
       required: false,
       default: false,
     },
+    verbose: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   data() {
     return {
@@ -193,11 +198,9 @@ export default {
     },
     handleOnClick(elementId) {
       if (!this.dropped) {
-        console.log(
-          "%c⌛ " + this.getLogTime() + "%cEntered click state",
-          this.consoleStyles.time,
-          this.consoleStyles.info.default
-        );
+        if (this.verbose) {
+          this.logEnteredClickState();
+        }
 
         // Create elementClone
         let element = this.getElementById(elementId);
@@ -235,11 +238,9 @@ export default {
 
       // Enter dragging state if user didn't drop item
       if (!this.dropped) {
-        console.log(
-          "%c⌛ " + this.getLogTime() + "%cEntered drag state",
-          this.consoleStyles.time,
-          this.consoleStyles.info.default
-        );
+        if (this.verbose) {
+          this.logEnteredDragState();
+        }
 
         // Insert elementClone
         let parentElement = element.parentNode;
@@ -274,13 +275,9 @@ export default {
         // Reset dropped status if user dropped the element before entering dragging state
         this.dropped = false;
 
-        console.log(
-          "%c⌛ " +
-            this.getLogTime() +
-            "%cDropped element before entering drag state",
-          this.consoleStyles.time,
-          this.consoleStyles.info.warning
-        );
+        if (this.verbose) {
+          this.logDroppedElement();
+        }
       }
     },
     handleMoveListener(elementClone, elementWidth, elementHeight) {
@@ -561,13 +558,19 @@ export default {
       newElementIndex,
       draggedElement
     ) {
-      this.$emit("elements-changed", {
+      let data = {
         oldElementsArray: oldElementsArray,
         newElementsArray: newElementsArray,
         oldElementIndex: oldElementIndex,
         newElementIndex: newElementIndex,
         draggedElement: draggedElement,
-      });
+      };
+
+      this.$emit("elements-changed", data);
+
+      if (this.verbose) {
+        this.logMovedElement(data);
+      }
     },
     clearElementDropPreviewStyling(element) {
       // TODO: Implement drop preview styling customization
@@ -674,7 +677,69 @@ export default {
 
       return elementSize;
     },
-    getLogTime() {
+    logEnteredClickState() {
+      console.log(
+        "%c⌛ " + this.getTimeFormatted() + "%cEntered click state",
+        this.consoleStyles.time,
+        this.consoleStyles.info.default
+      );
+    },
+    logDroppedElement() {
+      console.log(
+        "%c⌛ " +
+          this.getTimeFormatted() +
+          "%cDropped element before entering drag state",
+        this.consoleStyles.time,
+        this.consoleStyles.info.warning
+      );
+    },
+    logEnteredDragState() {
+      console.log(
+        "%c⌛ " + this.getTimeFormatted() + "%cEntered drag state",
+        this.consoleStyles.time,
+        this.consoleStyles.info.default
+      );
+    },
+    logMovedElement(data) {
+      console.groupCollapsed(
+        "%c⌛ " + this.getTimeFormatted() + "%cMoved element 🚀",
+        this.consoleStyles.time,
+        this.consoleStyles.info.success
+      );
+
+      // Moved element
+      console.groupCollapsed(
+        "%cMoved element",
+        this.consoleStyles.info.default
+      );
+      console.log(data.draggedElement);
+      console.groupEnd();
+
+      // Old index
+      console.log(
+        "%cOld index: " + data.oldElementIndex,
+        this.consoleStyles.info.default
+      );
+
+      // New index
+      console.log(
+        "%cNew index: " + data.newElementIndex,
+        this.consoleStyles.info.default
+      );
+
+      // Old array
+      console.groupCollapsed("%cOld array", this.consoleStyles.info.default);
+      console.table(data.oldElementsArray);
+      console.groupEnd();
+
+      // New array
+      console.groupCollapsed("%cNew array", this.consoleStyles.info.default);
+      console.table(data.newElementsArray);
+      console.groupEnd();
+
+      console.groupEnd();
+    },
+    getTimeFormatted() {
       let time = new Date();
       time =
         String(time.getHours()).padStart(2, "0") +
@@ -692,38 +757,46 @@ export default {
     cursorDistanceTraveled(d) {
       if (this.travelDistanceWatcherSwitches.thousand) {
         if (d > 1000) {
-          console.log(
-            "%c🏁" + "%cTraveled 1k pixels",
-            this.consoleStyles.time,
-            this.consoleStyles.info.magic
-          );
+          if (this.verbose) {
+            console.log(
+              "%c🏁" + "%cTraveled 1k pixels",
+              this.consoleStyles.time,
+              this.consoleStyles.info.magic
+            );
+          }
           this.travelDistanceWatcherSwitches.thousand = false;
         }
       } else if (this.travelDistanceWatcherSwitches.tenThousand) {
         if (d > 10000) {
-          console.log(
-            "%c🏁" + "%cTraveled 10k pixels",
-            this.consoleStyles.time,
-            this.consoleStyles.info.magic
-          );
+          if (this.verbose) {
+            console.log(
+              "%c🏁" + "%cTraveled 10k pixels",
+              this.consoleStyles.time,
+              this.consoleStyles.info.magic
+            );
+          }
           this.travelDistanceWatcherSwitches.tenThousand = false;
         }
       } else if (this.travelDistanceWatcherSwitches.hundredThousand) {
         if (d > 100000) {
-          console.log(
-            "%c🏁" + "%cTraveled 100k pixels",
-            this.consoleStyles.time,
-            this.consoleStyles.info.magic
-          );
+          if (this.verbose) {
+            console.log(
+              "%c🏁" + "%cTraveled 100k pixels",
+              this.consoleStyles.time,
+              this.consoleStyles.info.magic
+            );
+          }
           this.travelDistanceWatcherSwitches.hundredThousand = false;
         }
       } else if (this.travelDistanceWatcherSwitches.million) {
         if (d > 1000000) {
-          console.log(
-            "%c🏁" + "%cTraveled one million pixels!",
-            this.consoleStyles.time,
-            this.consoleStyles.info.magic
-          );
+          if (this.verbose) {
+            console.log(
+              "%c🏁" + "%cTraveled one million pixels!",
+              this.consoleStyles.time,
+              this.consoleStyles.info.magic
+            );
+          }
           this.travelDistanceWatcherSwitches.million = false;
         }
       }

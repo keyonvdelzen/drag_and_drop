@@ -182,15 +182,18 @@ export default {
         }
 
         // Bind event listeners
-        element.addEventListener("mousedown", (e) => {
+        element.addEventListener("pointerdown", (e) => {
           if (e.which === 1) {
+            console.log(e);
             this.handleOnClick(element.id);
           }
         });
-        element.addEventListener("mouseenter", (e) => {
+        element.addEventListener("pointerenter", (e) => {
+          console.log(e);
           this.setElementDropPreview(e, element.id);
         });
-        element.addEventListener("mouseout", (e) => {
+        element.addEventListener("pointerout", (e) => {
+          console.log(e);
           this.setElementDropPreview(e, element.id);
         });
       }
@@ -283,28 +286,38 @@ export default {
     },
     handleMoveListener(elementClone, elementWidth, elementHeight) {
       let self = this;
-      document.addEventListener("mousemove", function mouseMoveHandler(event) {
-        if (self.dragging) {
-          self.setElementClonePosition(
-            event,
-            elementClone,
-            elementWidth,
-            elementHeight
-          );
-        } else {
-          this.removeEventListener("mousemove", mouseMoveHandler);
+      document.addEventListener(
+        "pointermove",
+        function mouseMoveHandler(event) {
+          if (self.dragging) {
+            self.setElementClonePosition(
+              elementClone,
+              elementWidth,
+              elementHeight,
+              event
+            );
+          } else {
+            this.removeEventListener("pointermove", mouseMoveHandler);
+          }
         }
-      });
+      );
     },
     handleDropListener(elementId) {
       let self = this;
-      document.addEventListener("mouseup", function mouseUpHandler() {
+      document.addEventListener("pointerup", function mouseUpHandler() {
         self.dropElement(elementId);
-        this.removeEventListener("mouseup", mouseUpHandler);
+        this.removeEventListener("pointerup", mouseUpHandler);
       });
     },
-    setElementClonePosition(event, elementClone, elementWidth, elementHeight) {
-      event.preventDefault();
+    setElementClonePosition(
+      elementClone,
+      elementWidth,
+      elementHeight,
+      event = null
+    ) {
+      if (event) {
+        event.preventDefault();
+      }
 
       let cursorPositionLeft = event.pageX;
       let cursorPositionTop = event.pageY;
@@ -335,8 +348,9 @@ export default {
       elementClone.style.visibility = "visible";
       elementClone.style.position = "absolute";
 
-      // eslint-disable-next-line
-      // debugger;
+      // Move element to end of list (runs only once)
+      let parentElement = elementClone.parentNode;
+      parentElement.appendChild(elementClone);
     },
     setElementDropPreview(event, hoverElementId) {
       if (this.dragging) {

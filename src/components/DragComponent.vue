@@ -182,18 +182,15 @@ export default {
         }
 
         // Bind event listeners
-        element.addEventListener("pointerdown", (e) => {
+        element.addEventListener("mousedown", (e) => {
           if (e.which === 1) {
-            console.log(e);
             this.handleOnClick(element.id);
           }
         });
-        element.addEventListener("pointerenter", (e) => {
-          console.log(e);
+        element.addEventListener("mouseenter", (e) => {
           this.setElementDropPreview(e, element.id);
         });
-        element.addEventListener("pointerout", (e) => {
-          console.log(e);
+        element.addEventListener("mouseout", (e) => {
           this.setElementDropPreview(e, element.id);
         });
       }
@@ -286,27 +283,24 @@ export default {
     },
     handleMoveListener(elementClone, elementWidth, elementHeight) {
       let self = this;
-      document.addEventListener(
-        "pointermove",
-        function mouseMoveHandler(event) {
-          if (self.dragging) {
-            self.setElementClonePosition(
-              elementClone,
-              elementWidth,
-              elementHeight,
-              event
-            );
-          } else {
-            this.removeEventListener("pointermove", mouseMoveHandler);
-          }
+      document.addEventListener("mousemove", function mouseMoveHandler(event) {
+        if (self.dragging) {
+          self.setElementClonePosition(
+            elementClone,
+            elementWidth,
+            elementHeight,
+            event
+          );
+        } else {
+          this.removeEventListener("mousemove", mouseMoveHandler);
         }
-      );
+      });
     },
     handleDropListener(elementId) {
       let self = this;
-      document.addEventListener("pointerup", function mouseUpHandler() {
+      document.addEventListener("mouseup", function mouseUpHandler() {
         self.dropElement(elementId);
-        this.removeEventListener("pointerup", mouseUpHandler);
+        this.removeEventListener("mouseup", mouseUpHandler);
       });
     },
     setElementClonePosition(

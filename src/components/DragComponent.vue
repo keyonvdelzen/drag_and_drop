@@ -552,10 +552,6 @@ export default {
       // Get and set element index
       let elementIndex = [].indexOf.call(element.parentNode.children, element);
 
-      if (elementIndex > this.oldIndex) {
-        elementIndex--;
-      }
-
       this.newIndex = elementIndex;
 
       let oldIndex = this.oldIndex;

@@ -358,6 +358,7 @@ export default {
         // Only set preview if user has moved cursor further than the size of the element the user is dragging over
         // or if user has already set a drop preview in current drag
         // Given a 0.5 factor correction to smooth out the movement
+        // TODO: track where user starts dragging relative within the element and use that to calculate the distance the user needs to drag before unlocking drop preview
         let movedFarEnoughX = hoverElementWidth * 0.5 < this.cursorMovedX;
         let movedFarEnoughY = hoverElementHeight * 0.5 < this.cursorMovedY;
 
@@ -380,32 +381,53 @@ export default {
           let halfWidth = hoverDomElement.offsetWidth / 2;
           let halfHeight = hoverDomElement.offsetHeight / 2;
 
-          // Show and insert drop preview element
+          // Get dom element and hover dom element indexes
+          let domElementIndex = [].indexOf.call(
+            domElement.parentNode.children,
+            domElement
+          );
+          let hoverDomElementIndex = [].indexOf.call(
+            hoverDomElement.parentNode.children,
+            hoverDomElement
+          );
+
+          // Insert drop preview element
           if (this.orientation === "vertical") {
-            // If mouse enter/left on top half of element
+            // If mouse enter/out on top half of element
             if (relativeCursorPositionY < halfHeight) {
-              hoverDomParentElement.insertBefore(domElement, hoverDomElement);
+              if (hoverDomElementIndex - 1 !== domElementIndex) {
+                hoverDomParentElement.insertBefore(domElement, hoverDomElement);
+              }
             }
-            // If mouse enter/left on bottom half of element
+
+            // If mouse enter/out on bottom half of element
             else {
-              hoverDomParentElement.insertBefore(
-                domElement,
-                hoverDomElement.nextSibling
-              );
+              if (hoverDomElementIndex + 1 !== domElementIndex) {
+                hoverDomParentElement.insertBefore(
+                  domElement,
+                  hoverDomElement.nextSibling
+                );
+              }
             }
-          } else {
-            // If mouse enter/left on left half of element
+          } else if (this.orientation === "horizontal") {
+            // If mouse enter/out on left half of element
             if (relativeCursorPositionX < halfWidth) {
-              hoverDomParentElement.insertBefore(domElement, hoverDomElement);
+              if (hoverDomElementIndex - 1 !== domElementIndex) {
+                hoverDomParentElement.insertBefore(domElement, hoverDomElement);
+              }
             }
-            // If mouse enter/left on right half of element
+
+            // If mouse enter/out on right half of element
             else {
-              hoverDomParentElement.insertBefore(
-                domElement,
-                hoverDomElement.nextSibling
-              );
+              if (hoverDomElementIndex + 1 !== domElementIndex) {
+                hoverDomParentElement.insertBefore(
+                  domElement,
+                  hoverDomElement.nextSibling
+                );
+              }
             }
           }
+
           this.showElement(domElement);
         }
       }

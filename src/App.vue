@@ -1,13 +1,43 @@
 <template>
   <div>
     <div class="controls">
-      <button
-        @click="verbose = !verbose"
-        class="button"
-        :class="{ active: verbose }"
-      >
-        Verbose
-      </button>
+      <div class="inputs">
+        <div class="input-container">
+          <label for="drag-delay-input" class="input-label">Drag delay</label>
+          <input
+            v-model="dragDelay"
+            type="text"
+            name="drag-delay-input"
+            id="drag-delay-input"
+            class="input-item"
+            :size="dragDelay.length > 0 ? dragDelay.length : 3"
+          />
+        </div>
+      </div>
+
+      <div class="switches">
+        <button
+          @click="animateDragElement = !animateDragElement"
+          class="button"
+          :class="{ active: animateDragElement }"
+        >
+          Animate clone
+        </button>
+        <button
+          @click="animateDropPreview = !animateDropPreview"
+          class="button"
+          :class="{ active: animateDropPreview }"
+        >
+          Animate drop preview
+        </button>
+        <button
+          @click="verbose = !verbose"
+          class="button verbose"
+          :class="{ active: verbose }"
+        >
+          Verbose
+        </button>
+      </div>
     </div>
 
     <div class="lists-container">
@@ -19,9 +49,9 @@
         dragContainerId="drag-container-vertical"
         dragElementClass="drag-element"
         preDragElementClass="pre-drag"
-        :dragDelay="150"
-        :animateDragElement="true"
-        :animateDropPreview="true"
+        :dragDelay="Number(dragDelay)"
+        :animateDragElement="animateDragElement"
+        :animateDropPreview="animateDropPreview"
         :verbose="verbose"
       >
         <div class="drag-container-vertical" id="drag-container-vertical">
@@ -44,12 +74,12 @@
         @elements-changed="handleElementsChanged"
         :elements="itemsHorizontal"
         orientation="horizontal"
-        :dragDelay="150"
+        :dragDelay="Number(dragDelay)"
         dragContainerId="drag-container-horizontal"
         dragElementClass="drag-element"
         preDragElementClass="pre-drag"
-        :animateDragElement="true"
-        :animateDropPreview="true"
+        :animateDragElement="animateDragElement"
+        :animateDropPreview="animateDropPreview"
         :verbose="verbose"
       >
         <div class="drag-container-horizontal" id="drag-container-horizontal">
@@ -81,6 +111,9 @@ export default {
   },
   data() {
     return {
+      dragDelay: 150,
+      animateDragElement: true,
+      animateDropPreview: true,
       verbose: false,
       itemsVertical: [
         {
@@ -222,40 +255,88 @@ export default {
 </script>
 
 <style lang="scss">
+body {
+  margin: 0;
+  font-family: "Arial";
+}
+
 $gray: #aaa;
 $light-gray: #fafafa;
+
 .controls {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 32px;
   margin-bottom: 16px;
   padding: 16px;
+  background-color: $light-gray;
 
-  .button {
-    display: inline-block;
-    margin: 4px 2px;
-    border: none;
-    border-radius: 8px;
-    padding: 15px 32px;
-    text-align: center;
-    font-size: 16px;
-    text-decoration: none;
-    color: white;
-    background-color: #555555;
-    cursor: pointer;
-    transition: all 0.1s ease-in;
+  .inputs {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
 
-    &.active {
-      background-color: #4caf50;
+    .input-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+
+      .input-label {
+        margin-right: 16px;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+      }
+
+      .input-item {
+        border: none;
+        border-radius: 8px;
+        padding: 16px;
+        font-size: 16px;
+        text-decoration: none;
+        color: white;
+        background-color: #555555;
+      }
+    }
+  }
+
+  .switches {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    margin-left: auto;
+
+    .button {
+      display: inline-block;
+      margin: 4px 2px;
+      border: none;
+      border-radius: 8px;
+      padding: 16px 32px;
+      text-align: center;
+      font-size: 16px;
+      text-decoration: none;
+      color: white;
+      background-color: #555555;
+      cursor: pointer;
+      transition: all 0.1s ease-in;
+
+      &.active {
+        background-color: #4caf50;
+      }
     }
   }
 }
 
 .lists-container {
   display: flex;
+  flex-direction: row;
   justify-content: flex-start;
   align-items: flex-start;
   gap: 32px;
-  padding: 64px;
-  border: 2px dashed gray;
-  border-radius: 8px;
+  padding: 32px 64px;
 
   .drag-container-vertical {
     display: flex;

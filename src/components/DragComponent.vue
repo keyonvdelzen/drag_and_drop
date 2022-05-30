@@ -57,6 +57,7 @@ export default {
   },
   data() {
     return {
+      holding: false,
       dragging: false,
       dropped: false,
       elementId: null,
@@ -200,7 +201,7 @@ export default {
     handleOnClick(elementId) {
       if (!this.dropped) {
         if (this.verbose) {
-          this.logEnteredClickState();
+          this.logEnteredClickedState();
         }
 
         // Create elementClone
@@ -239,8 +240,12 @@ export default {
 
       // Enter dragging state if user didn't drop item
       if (!this.dropped) {
+        // Set holding true
+        this.holding = true;
+
+        // Log
         if (this.verbose) {
-          this.logEnteredDragState();
+          this.logEnteredHoldingState();
         }
 
         // Insert elementClone
@@ -264,9 +269,6 @@ export default {
           elementClone.classList.add("animated-clone-pulse");
         }
 
-        // Set dragging true
-        this.dragging = true;
-
         // Bind move listener to position element clone at cursor position
         this.handleMoveListener(elementClone, elementWidth, elementHeight);
 
@@ -284,7 +286,7 @@ export default {
     handleMoveListener(elementClone, elementWidth, elementHeight) {
       let self = this;
       document.addEventListener("mousemove", function mouseMoveHandler(event) {
-        if (self.dragging) {
+        if (self.holding || self.dragging) {
           self.setElementClonePosition(
             elementClone,
             elementWidth,
@@ -311,6 +313,17 @@ export default {
     ) {
       if (event) {
         event.preventDefault();
+      }
+
+      // Switch from holding to dragging state
+      if (this.holding) {
+        this.holding = false;
+        this.dragging = true;
+
+        // Log
+        if (this.verbose) {
+          this.logEnteredDraggingState();
+        }
       }
 
       let cursorPositionLeft = event.pageX;
@@ -347,7 +360,7 @@ export default {
       parentElement.appendChild(elementClone);
     },
     setElementDropPreview(event, hoverElementId) {
-      if (this.dragging) {
+      if (this.holding || this.dragging) {
         // Get data
         let domElement = this.getElementById(this.elementId);
         let hoverDomElement = this.getElementById(hoverElementId);
@@ -595,7 +608,7 @@ export default {
 
       this.$emit("elements-changed", data);
 
-      if (this.verbose) {
+      if (this.verbose && this.dragging) {
         this.logMovedElement(data);
       }
     },
@@ -620,6 +633,7 @@ export default {
 
       this.clearElementDropPreviewStyling(element);
 
+      this.holding = false;
       this.dragging = false;
       this.elementId = null;
       this.elementClone = null;
@@ -704,9 +718,9 @@ export default {
 
       return elementSize;
     },
-    logEnteredClickState() {
+    logEnteredClickedState() {
       console.log(
-        "%c⌛ " + this.getTimeFormatted() + "%cEntered click state",
+        "%c⌛ " + this.getTimeFormatted() + "%cEntered clicked state",
         this.consoleStyles.time,
         this.consoleStyles.info.default
       );
@@ -715,14 +729,21 @@ export default {
       console.log(
         "%c⌛ " +
           this.getTimeFormatted() +
-          "%cDropped element before entering drag state",
+          "%cDropped element before entering holding state",
         this.consoleStyles.time,
         this.consoleStyles.info.warning
       );
     },
-    logEnteredDragState() {
+    logEnteredHoldingState() {
       console.log(
-        "%c⌛ " + this.getTimeFormatted() + "%cEntered drag state",
+        "%c⌛ " + this.getTimeFormatted() + "%cEntered holding state",
+        this.consoleStyles.time,
+        this.consoleStyles.info.default
+      );
+    },
+    logEnteredDraggingState() {
+      console.log(
+        "%c⌛ " + this.getTimeFormatted() + "%cEntered dragging state",
         this.consoleStyles.time,
         this.consoleStyles.info.default
       );
